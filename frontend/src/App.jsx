@@ -1,362 +1,374 @@
-
-import { motion } from "motion/react";
+import { useState } from "react";
 import {
   ArrowRight,
-  Github,
-  ShieldCheck,
   Code2,
-  GitBranch,
-  ScanSearch,
-  Zap,
   Upload,
+  FileArchive,
+  ShieldCheck,
+  ScanSearch,
+  GitBranch,
+  Loader2,
   CheckCircle2,
-  Menu,
+  AlertCircle,
+  X,
 } from "lucide-react";
 
-const features = [
-  {
-    icon: ScanSearch,
-    number: "01",
-    title: "Requirement Analysis",
-    description:
-      "Turn your software requirements into clear, traceable checkpoints.",
-  },
-  {
-    icon: GitBranch,
-    number: "02",
-    title: "Code Traceability",
-    description:
-      "Discover which files and code sections provide evidence for each requirement.",
-  },
-  {
-    icon: ShieldCheck,
-    number: "03",
-    title: "Implementation Verification",
-    description:
-      "Understand what is implemented, partially implemented, missing or not verified.",
-  },
-];
+const API_URL = "http://localhost:8000";
 
 function App() {
-  return (
-    <div className="min-h-screen overflow-hidden bg-[#080b14] text-white">
-      {/* Background effects */}
-      <div className="pointer-events-none fixed inset-0 -z-0">
-        <div className="absolute -top-40 left-1/4 h-96 w-96 rounded-full bg-violet-600/15 blur-[130px]" />
-        <div className="absolute top-80 right-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-[130px]" />
-        <div className="grid-background absolute inset-0 opacity-20" />
-      </div>
+  const [page, setPage] = useState("home");
+  const [projectName, setProjectName] = useState("");
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [uploadedProject, setUploadedProject] = useState(null);
 
+  async function handleUpload(e) {
+    e.preventDefault();
+    setError("");
+
+    if (!file) {
+      setError("Please select a ZIP file first.");
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".zip")) {
+      setError("Please upload a .zip file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    if (projectName.trim()) {
+      formData.append("project_name", projectName.trim());
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(`${API_URL}/projects/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Upload failed. Please try again.");
+      }
+
+      setUploadedProject(data);
+    } catch (err) {
+      setError(
+        err.message === "Failed to fetch"
+          ? "Cannot connect to the backend. Make sure your FastAPI server is running."
+          : err.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetUpload() {
+    setFile(null);
+    setProjectName("");
+    setUploadedProject(null);
+    setError("");
+  }
+
+  return (
+    <div className="min-h-screen bg-[#080b14] text-white">
       {/* Navigation */}
-      <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-12">
-        <a href="#" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/15">
-            <Code2 className="h-6 w-6 text-violet-300" />
+      <nav className="flex items-center justify-between border-b border-white/10 px-6 py-5 md:px-12">
+        <button
+          onClick={() => {
+            setPage("home");
+            resetUpload();
+          }}
+          className="flex items-center gap-3"
+        >
+          <div className="rounded-xl border border-violet-400/30 bg-violet-500/15 p-2">
+            <Code2 className="text-violet-300" size={25} />
           </div>
-          <span className="text-xl font-bold tracking-tight">
+          <span className="text-xl font-bold">
             Spec<span className="text-violet-400">Trace</span>
           </span>
-        </a>
-
-        <div className="hidden items-center gap-9 text-sm text-slate-400 md:flex">
-          <a href="#features" className="transition hover:text-white">
-            Features
-          </a>
-          <a href="#workflow" className="transition hover:text-white">
-            How it works
-          </a>
-          <a href="#about" className="transition hover:text-white">
-            About
-          </a>
-        </div>
-
-        <a
-          href="#get-started"
-          className="hidden items-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/10 px-5 py-2.5 text-sm font-medium text-violet-200 transition hover:bg-violet-500/20 sm:flex"
-        >
-          Get started <ArrowRight size={16} />
-        </a>
-
-        <button className="rounded-lg border border-white/10 p-2 md:hidden">
-          <Menu size={21} />
         </button>
+
+        <div className="flex items-center gap-5 text-sm text-slate-400">
+          <button onClick={() => setPage("home")} className="hover:text-white">
+            Home
+          </button>
+          <button
+            onClick={() => setPage("upload")}
+            className="rounded-lg bg-violet-600 px-4 py-2 font-semibold text-white hover:bg-violet-500"
+          >
+            Start Analysis
+          </button>
+        </div>
       </nav>
 
-      {/* Hero section */}
-      <main className="relative z-10">
-        <section
-          id="get-started"
-          className="mx-auto grid max-w-7xl items-center gap-14 px-6 pb-24 pt-20 lg:grid-cols-2 lg:px-12 lg:pb-32 lg:pt-28"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-4 py-2 text-xs font-medium tracking-wide text-violet-200">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              SOFTWARE REQUIREMENT INTELLIGENCE
-            </div>
-
-            <h1 className="max-w-2xl text-5xl font-bold leading-[1.12] tracking-tight sm:text-6xl lg:text-7xl">
-              Does your code
-              <br />
-              actually meet
-              <br />
-              <span className="gradient-text">the specs?</span>
-            </h1>
-
-            <p className="mt-8 max-w-xl text-base leading-8 text-slate-400 sm:text-lg">
-              Stop guessing. Start verifying. SpecTrace connects software
-              requirements to code evidence, helping you understand what your
-              project really implements.
-            </p>
-
-            <div className="mt-10 flex flex-wrap gap-4">
-              <a
-                href="#workflow"
-                className="group flex items-center gap-3 rounded-xl bg-violet-600 px-6 py-4 font-semibold shadow-lg shadow-violet-600/25 transition hover:-translate-y-1 hover:bg-violet-500"
-              >
-                Explore SpecTrace
-                <ArrowRight
-                  size={18}
-                  className="transition group-hover:translate-x-1"
-                />
-              </a>
-
-              <a
-                href="#features"
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-6 py-4 font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/[0.08]"
-              >
-                Discover features
-              </a>
-            </div>
-
-            <div className="mt-12 flex flex-wrap gap-7 text-sm text-slate-500">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-emerald-400" />
-                Requirement-focused
-              </span>
-              <span className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-emerald-400" />
-                Code evidence
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Animated analysis visual */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="relative mx-auto w-full max-w-xl"
-          >
-            <div className="absolute inset-10 rounded-full bg-violet-600/20 blur-[90px]" />
-
-            <div className="relative rounded-3xl border border-white/10 bg-[#101626]/90 p-5 shadow-2xl shadow-violet-950/40 backdrop-blur-xl sm:p-7">
-              <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    Requirement Intelligence
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    SpecTrace analysis workspace
-                  </p>
-                </div>
-                <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">
-                  DEMO PREVIEW
-                </div>
+      {page === "home" ? (
+        /* HOME PAGE */
+        <main className="mx-auto max-w-7xl px-6 py-24 md:px-12">
+          <div className="grid items-center gap-16 lg:grid-cols-2">
+            <div>
+              <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/10 px-4 py-2 text-xs text-violet-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                SOFTWARE REQUIREMENT INTELLIGENCE
               </div>
 
-              <div className="my-7 space-y-4">
-                <div className="rounded-xl border border-violet-400/20 bg-violet-400/[0.07] p-4">
-                  <div className="mb-3 flex items-center gap-2 text-xs text-violet-300">
-                    <ScanSearch size={15} />
-                    SOFTWARE REQUIREMENT
-                  </div>
-                  <p className="text-sm leading-6 text-slate-200">
-                    The system shall allow users to securely log in using
-                    their registered email.
-                  </p>
-                </div>
+              <h1 className="text-5xl font-bold leading-tight sm:text-6xl">
+                Does your code actually meet{" "}
+                <span className="gradient-text">the specs?</span>
+              </h1>
 
-                <div className="flex justify-center">
-                  <div className="h-8 w-px bg-gradient-to-b from-violet-400 to-cyan-400" />
-                </div>
+              <p className="mt-7 max-w-xl text-lg leading-8 text-slate-400">
+                Stop guessing. Start verifying. SpecTrace connects software
+                requirements to code evidence, helping you understand what
+                your project really implements.
+              </p>
 
-                <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/[0.06] p-4">
-                  <div className="mb-3 flex items-center gap-2 text-xs text-cyan-300">
-                    <Code2 size={15} />
-                    SOURCE CODE EVIDENCE
-                  </div>
-                  <div className="rounded-lg bg-[#080d18] p-3 font-mono text-xs leading-6">
-                    <p className="text-slate-500"># authentication.py</p>
-                    <p>
-                      <span className="text-violet-300">def</span>{" "}
-                      <span className="text-cyan-300">login</span>
-                      <span className="text-slate-300">(email, password):</span>
-                    </p>
-                    <p className="pl-4 text-emerald-300">
-                      verify_credentials(email, password)
-                    </p>
-                    <p className="pl-4 text-slate-300">...</p>
-                  </div>
-                </div>
+              <button
+                onClick={() => setPage("upload")}
+                className="mt-9 flex items-center gap-3 rounded-xl bg-violet-600 px-7 py-4 font-semibold shadow-lg shadow-violet-600/20 hover:bg-violet-500"
+              >
+                Start your analysis <ArrowRight size={19} />
+              </button>
 
-                <div className="flex justify-center">
-                  <div className="h-8 w-px bg-gradient-to-b from-cyan-400 to-emerald-400" />
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl border border-emerald-400/20 bg-emerald-400/[0.07] p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-emerald-400/10 p-2">
-                      <ShieldCheck className="text-emerald-400" size={21} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Traceability result
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        Illustrative interface preview
-                      </p>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">
-                    Example
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-white/10 pt-4 text-xs text-slate-500">
-                <span>Requirement → Code → Evidence</span>
-                <span className="flex items-center gap-1 text-violet-300">
-                  <Zap size={13} /> Traceability
+              <div className="mt-10 flex flex-wrap gap-6 text-sm text-slate-400">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="text-emerald-400" size={17} />
+                  Requirement analysis
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="text-emerald-400" size={17} />
+                  Code traceability
                 </span>
               </div>
             </div>
 
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -right-4 top-16 hidden rounded-xl border border-violet-400/20 bg-[#17172a] p-3 shadow-xl sm:block"
-            >
-              <GitBranch className="text-violet-300" size={22} />
-            </motion.div>
-
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-5 -left-4 hidden rounded-xl border border-cyan-400/20 bg-[#10202a] p-3 shadow-xl sm:block"
-            >
-              <ShieldCheck className="text-cyan-300" size={22} />
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* Features */}
-        <section
-          id="features"
-          className="border-t border-white/[0.08] bg-white/[0.015] px-6 py-24 lg:px-12"
-        >
-          <div className="mx-auto max-w-7xl">
-            <div className="mx-auto mb-16 max-w-2xl text-center">
-              <p className="text-sm font-semibold tracking-[0.25em] text-violet-400">
-                WHAT WE DO
+            <div className="rounded-3xl border border-white/10 bg-[#101626] p-7 shadow-2xl shadow-violet-950/30">
+              <p className="text-sm font-semibold text-violet-300">
+                HOW SPECTRACE WORKS
               </p>
-              <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
-                From requirements to
-                <span className="gradient-text"> evidence.</span>
-              </h2>
-              <p className="mt-5 leading-7 text-slate-400">
-                A clearer way to understand the relationship between what
-                software should do and what its code actually contains.
-              </p>
-            </div>
 
-            <div className="grid gap-5 md:grid-cols-3">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-
+              {[
+                {
+                  icon: Upload,
+                  title: "Upload your project",
+                  desc: "Provide your Python project as a ZIP file.",
+                },
+                {
+                  icon: ScanSearch,
+                  title: "Add requirements",
+                  desc: "Tell us what your software is supposed to do.",
+                },
+                {
+                  icon: GitBranch,
+                  title: "Explore traceability",
+                  desc: "View the analysis results and code evidence.",
+                },
+              ].map((item, index) => {
+                const Icon = item.icon;
                 return (
-                  <motion.div
-                    key={feature.number}
-                    initial={{ opacity: 0, y: 25 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.15 }}
-                    className="group rounded-2xl border border-white/10 bg-[#101626]/70 p-7 transition duration-300 hover:-translate-y-2 hover:border-violet-400/40 hover:bg-[#151c30]"
+                  <div
+                    key={item.title}
+                    className="mt-7 flex items-start gap-4"
                   >
-                    <div className="mb-8 flex items-center justify-between">
-                      <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 p-3">
-                        <Icon className="text-violet-300" size={25} />
-                      </div>
-                      <span className="font-mono text-sm text-slate-600">
-                        /{feature.number}
-                      </span>
+                    <div className="rounded-xl bg-violet-500/15 p-3">
+                      <Icon className="text-violet-300" size={23} />
                     </div>
-
-                    <h3 className="text-xl font-semibold">
-                      {feature.title}
-                    </h3>
-                    <p className="mt-4 text-sm leading-7 text-slate-400">
-                      {feature.description}
-                    </p>
-                  </motion.div>
+                    <div>
+                      <p className="font-semibold">{item.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-400">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
                 );
               })}
             </div>
           </div>
-        </section>
-
-        {/* Workflow */}
-        <section id="workflow" className="px-6 py-24 lg:px-12">
-          <div className="mx-auto max-w-5xl rounded-3xl border border-violet-400/20 bg-gradient-to-br from-violet-500/[0.12] via-[#101626] to-cyan-500/[0.06] px-7 py-14 text-center sm:px-14">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-300/20 bg-violet-400/10">
-              <Upload className="text-violet-300" size={26} />
-            </div>
-            <h2 className="mt-7 text-3xl font-bold sm:text-4xl">
-              Ready to inspect your project?
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl leading-7 text-slate-400">
-              Upload your project, provide its requirements and explore the
-              relationship between your specifications and source code.
-            </p>
-            <button
-              onClick={() =>
-                alert("Project upload will be connected to the backend in a later step.")
-              }
-              className="mt-8 inline-flex items-center gap-3 rounded-xl bg-violet-600 px-7 py-4 font-semibold shadow-lg shadow-violet-600/20 transition hover:-translate-y-1 hover:bg-violet-500"
-            >
-              Start your analysis <ArrowRight size={18} />
-            </button>
-            <p className="mt-4 text-xs text-slate-500">
-              Upload and analysis functionality will be connected in the next
-              development stages.
-            </p>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer
-        id="about"
-        className="relative z-10 border-t border-white/10 px-6 py-8 lg:px-12"
-      >
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="flex items-center gap-2 font-semibold">
-            <Code2 className="text-violet-400" size={19} />
-            SpecTrace
-          </div>
-          <p className="text-center text-xs text-slate-500">
-            Making software requirements traceable.
-          </p>
-          <a
-            href="#"
-            className="flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+        </main>
+      ) : (
+        /* UPLOAD PAGE */
+        <main className="mx-auto max-w-3xl px-6 py-16">
+          <button
+            onClick={() => {
+              setPage("home");
+              resetUpload();
+            }}
+            className="mb-8 text-sm text-slate-400 hover:text-white"
           >
-            <Github size={17} /> Project
-          </a>
-        </div>
+            ← Back to home
+          </button>
+
+          <div className="mb-9">
+            <p className="text-sm font-semibold tracking-widest text-violet-400">
+              STEP 01 — PROJECT SETUP
+            </p>
+            <h1 className="mt-3 text-4xl font-bold">
+              Upload your project
+            </h1>
+            <p className="mt-3 leading-7 text-slate-400">
+              Start by providing your Python project. We'll prepare it for
+              requirement analysis.
+            </p>
+          </div>
+
+          {!uploadedProject ? (
+            <form
+              onSubmit={handleUpload}
+              className="rounded-2xl border border-white/10 bg-[#101626] p-6 sm:p-9"
+            >
+              <label className="mb-2 block text-sm font-medium">
+                Project name
+              </label>
+
+              <input
+                type="text"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="e.g. Student Management System"
+                className="mb-7 w-full rounded-xl border border-white/10 bg-[#080d18] px-4 py-3 text-white outline-none focus:border-violet-400"
+              />
+
+              <label className="mb-3 block text-sm font-medium">
+                Upload ZIP file
+              </label>
+
+              <label className="flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-400/30 bg-violet-400/[0.04] p-6 text-center transition hover:border-violet-400/70">
+                <FileArchive size={42} className="mb-4 text-violet-300" />
+
+                {file ? (
+                  <>
+                    <p className="font-semibold text-emerald-300">
+                      {file.name}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">
+                      Click to select your project
+                    </p>
+                    <p className="mt-2 text-sm text-slate-400">
+                      Python project ZIP files only
+                    </p>
+                  </>
+                )}
+
+                <input
+                  type="file"
+                  accept=".zip,application/zip"
+                  className="hidden"
+                  onChange={(e) => {
+                    setFile(e.target.files[0] || null);
+                    setError("");
+                  }}
+                />
+              </label>
+
+              {file && (
+                <button
+                  type="button"
+                  onClick={() => setFile(null)}
+                  className="mt-3 flex items-center gap-1 text-xs text-slate-400 hover:text-white"
+                >
+                  <X size={14} /> Remove file
+                </button>
+              )}
+
+              {error && (
+                <div className="mt-5 flex items-start gap-2 rounded-lg border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-300">
+                  <AlertCircle size={18} className="shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl bg-violet-600 px-6 py-4 font-semibold hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={19} />
+                    Uploading project...
+                  </>
+                ) : (
+                  <>
+                    Upload project <ArrowRight size={19} />
+                  </>
+                )}
+              </button>
+
+              <p className="mt-4 text-center text-xs text-slate-500">
+                Your project must be compressed into a .zip file.
+              </p>
+            </form>
+          ) : (
+            <div className="rounded-2xl border border-emerald-400/20 bg-[#101626] p-8">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="text-emerald-400" size={32} />
+                <div>
+                  <h2 className="text-xl font-bold">Upload successful!</h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Your project has been received.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-7 space-y-4 rounded-xl bg-[#080d18] p-5 text-sm">
+                <div>
+                  <p className="text-slate-500">Project name</p>
+                  <p className="mt-1 font-medium">
+                    {uploadedProject.project_name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Project ID</p>
+                  <p className="mt-1 break-all font-mono text-violet-300">
+                    {uploadedProject.id}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Python files detected</p>
+                  <p className="mt-1 font-medium">
+                    {uploadedProject.python_file_count}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Status</p>
+                  <p className="mt-1 font-medium text-emerald-300">
+                    {uploadedProject.status}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-5 text-sm text-slate-400">
+                Next, we'll add the software requirements for this project.
+              </p>
+
+              <button
+                onClick={() =>
+                  alert("The requirements page will be added in the next step.")
+                }
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-4 font-semibold hover:bg-violet-500"
+              >
+                Continue <ArrowRight size={18} />
+              </button>
+            </div>
+          )}
+        </main>
+      )}
+
+      <footer className="border-t border-white/10 px-6 py-7 text-center text-xs text-slate-500">
+        SpecTrace — Making software requirements traceable.
       </footer>
     </div>
   );
