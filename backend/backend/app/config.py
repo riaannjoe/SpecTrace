@@ -25,7 +25,12 @@ class Settings:
         self.MAX_FILES_IN_ZIP: int = 2000
 
         self.ANALYSIS_ENGINE: str = os.getenv("ANALYSIS_ENGINE", "mock").lower()  # mock | real
-        self.ANALYSIS_ENGINE_MODULE: str = os.getenv("ANALYSIS_ENGINE_MODULE", "analysis_engine")
+        self.ANALYSIS_ENGINE_MODULE: str = os.getenv("ANALYSIS_ENGINE_MODULE", "ai_engine.backend_adapter")
+
+        # Gemini / AI Engine settings (optional — missing key activates static_fallback)
+        self.GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY") or None
+        self.GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        self.GEMINI_TIMEOUT_SECONDS: int = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))
 
 
 settings = Settings()
