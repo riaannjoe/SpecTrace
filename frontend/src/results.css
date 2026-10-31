@@ -1,0 +1,244 @@
+
+/* ─── Spinner animation ─────────────────────────────────────────────────────── */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ─── Navbar loading indicator ──────────────────────────────────────────────── */
+
+.navbar-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c4a7ff;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* ─── Results: header actions row ───────────────────────────────────────────── */
+
+.results-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ─── Result card: top row ──────────────────────────────────────────────────── */
+
+.result-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Requirement ID ────────────────────────────────────────────────────────── */
+
+.result-req-id {
+  color: #737d95;
+  font-size: 11px;
+  margin: 4px 0 8px;
+  font-family: monospace;
+}
+
+/* ─── Explanation ───────────────────────────────────────────────────────────── */
+
+.result-explanation {
+  color: #a0a8bb;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+/* ─── Badges row ────────────────────────────────────────────────────────────── */
+
+.result-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+
+.badge-confidence {
+  background: #1f2d45;
+  color: #88b8ff;
+}
+
+.badge-mode {
+  background: #2a2040;
+  color: #c5aaff;
+  text-transform: capitalize;
+}
+
+.badge-test {
+  background: #1f3328;
+  color: #7ce0a5;
+}
+
+/* ─── Risk reason ───────────────────────────────────────────────────────────── */
+
+.result-risk-reason {
+  font-size: 12px;
+  color: #b8a3d8;
+  margin-bottom: 8px;
+}
+
+.result-risk-reason strong {
+  color: #d9c9ff;
+}
+
+/* ─── Risk badge (inline) ────────────────────────────────────────────────────── */
+
+.result-risk {
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+
+.risk-critical { background: #3b1a1f; color: #ff7b8a; }
+.risk-high     { background: #3a2212; color: #ffa060; }
+.risk-medium   { background: #2e2a10; color: #f0c95a; }
+.risk-low      { background: #16311c; color: #6ddc96; }
+
+/* ─── Risk summary bar ───────────────────────────────────────────────────────── */
+
+.risk-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.risk-summary-label {
+  font-size: 12px;
+  color: #8992a8;
+}
+
+.risk-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ─── Expanded detail section ────────────────────────────────────────────────── */
+
+.result-detail {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Evidence items ─────────────────────────────────────────────────────────── */
+
+.evidence-item {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1e2840;
+}
+
+.evidence-item:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.evidence-file {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-family: monospace;
+  font-size: 12px;
+  color: #c4a7ff;
+  margin-bottom: 4px;
+}
+
+.evidence-line {
+  background: #222a40;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: #88b8ff;
+}
+
+.evidence-fn {
+  background: #1e2d20;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: #7ce0a5;
+}
+
+.evidence-desc {
+  color: #9aa3bc;
+  font-size: 12px;
+  margin-bottom: 5px;
+  line-height: 1.5;
+}
+
+.evidence-snippet {
+  background: #080e1a;
+  border: 1px solid #1e2840;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  color: #c5d8f8;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+.evidence-empty {
+  color: #737d95;
+  font-style: italic;
+}
+
+.evidence-test strong {
+  color: #7ce0a5;
+}
+
+/* ─── Test/engine meta ───────────────────────────────────────────────────────── */
+
+.result-test-status,
+.result-engine {
+  font-size: 11px;
+  color: #737d95;
+}
+
+/* ─── 5-column stats grid variant ────────────────────────────────────────────── */
+
+.stats-grid-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .stats-grid-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .stats-grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
