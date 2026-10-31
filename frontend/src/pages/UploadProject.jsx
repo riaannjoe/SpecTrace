@@ -1,21 +1,20 @@
-
 import { useState } from "react";
 import { Upload, FileArchive, X, ArrowRight } from "lucide-react";
 
-export default function UploadProject({ onUpload, loading }) {
+export default function UploadProject({ onUpload, loading, loadingState }) {
   const [file, setFile] = useState(null);
   const [projectName, setProjectName] = useState("");
 
   function handleFileChange(event) {
-    const selectedFile = event.target.files[0];
+    const selected = event.target.files[0];
 
-    if (selectedFile && !selectedFile.name.toLowerCase().endsWith(".zip")) {
+    if (selected && !selected.name.toLowerCase().endsWith(".zip")) {
       alert("Please select a ZIP file.");
       event.target.value = "";
       return;
     }
 
-    setFile(selectedFile || null);
+    setFile(selected || null);
   }
 
   function handleSubmit(event) {
@@ -28,6 +27,9 @@ export default function UploadProject({ onUpload, loading }) {
 
     onUpload(file, projectName);
   }
+
+  const buttonLabel =
+    loadingState === "uploading" ? "Uploading…" : "Upload Project";
 
   return (
     <div className="page-content">
@@ -82,7 +84,7 @@ export default function UploadProject({ onUpload, loading }) {
             type="text"
             placeholder="Enter your project name"
             value={projectName}
-            onChange={(event) => setProjectName(event.target.value)}
+            onChange={(e) => setProjectName(e.target.value)}
           />
         </div>
 
@@ -91,7 +93,7 @@ export default function UploadProject({ onUpload, loading }) {
           className="primary-button upload-submit"
           disabled={loading || !file}
         >
-          {loading ? "Uploading..." : "Upload Project"}
+          {buttonLabel}
           <ArrowRight size={18} />
         </button>
 

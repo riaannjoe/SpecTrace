@@ -1,4 +1,3 @@
-
 import {
   FolderOpen,
   FileCode2,
@@ -6,6 +5,7 @@ import {
   ArrowLeft,
   Play,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 export default function ProjectDetails({
@@ -13,6 +13,8 @@ export default function ProjectDetails({
   onBack,
   onAddRequirements,
   onAnalyze,
+  loading,
+  loadingState,
 }) {
   if (!project) {
     return (
@@ -24,6 +26,9 @@ export default function ProjectDetails({
       </div>
     );
   }
+
+  const analyzeLabel =
+    loadingState === "analyzing" ? "Analyzing…" : "Run Analysis";
 
   return (
     <div className="page-content">
@@ -91,14 +96,26 @@ export default function ProjectDetails({
         </div>
 
         <div className="details-actions">
-          <button className="secondary-button" onClick={onAddRequirements}>
+          <button
+            className="secondary-button"
+            onClick={onAddRequirements}
+            disabled={loading}
+          >
             <FileText size={18} />
             Manage Requirements
           </button>
 
-          <button className="primary-button" onClick={onAnalyze}>
-            <Play size={18} />
-            Run Analysis
+          <button
+            className="primary-button"
+            onClick={onAnalyze}
+            disabled={loading}
+          >
+            {loadingState === "analyzing" ? (
+              <Loader2 size={16} className="spin" />
+            ) : (
+              <Play size={18} />
+            )}
+            {analyzeLabel}
           </button>
         </div>
       </div>

@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
@@ -10,32 +9,35 @@ import Requirements from "./pages/Requirements";
 import Results from "./pages/Results";
 import ProjectDetails from "./pages/ProjectDetails";
 
+
 const API_URL = "http://localhost:8001";
+import {
+  listProjects,
+  uploadProject,
+  submitRequirements,
+  analyzeProject,
+  getResults,
+} from "./api";
+
 
 export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState(null);
   const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // "idle" | "uploading" | "saving" | "analyzing"
+  const [loadingState, setLoadingState] = useState("idle");
   const [error, setError] = useState("");
 
-  async function apiRequest(url, options = {}) {
-    const response = await fetch(`${API_URL}${url}`, options);
+  // Prevent duplicate analysis submissions (e.g. double-click or StrictMode).
+  const analyzingRef = useRef(false);
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(data.detail || "Something went wrong.");
-    }
-
-    return data;
-  }
+  const loading = loadingState !== "idle";
 
   async function loadProjects() {
     try {
-      const data = await apiRequest("/projects");
-      setProjects(Array.isArray(data) ? data : data.projects || []);
+      const data = await listProjects();
+      setProjects(Array.isArray(data) ? data : data.projects ?? []);
     } catch (err) {
       setError(err.message);
     }
@@ -46,82 +48,58 @@ export default function App() {
   }, []);
 
   async function handleUpload(file, projectName) {
-    setLoading(true);
+    setLoadingState("uploading");
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      if (projectName.trim()) {
-        formData.append("project_name", projectName.trim());
-      }
-
-      const uploadedProject = await apiRequest("/projects/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      setProject(uploadedProject);
+      const uploaded = await uploadProject(file, projectName);
+      setProject(uploaded);
       await loadProjects();
       setActivePage("Requirements");
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setLoadingState("idle");
     }
   }
 
-  async function handleSaveRequirements(requirements) {
+  async function handleSaveRequirements(requirementTexts) {
     if (!project) return;
 
-    setLoading(true);
+    setLoadingState("saving");
     setError("");
 
     try {
-      await apiRequest(`/projects/${project.id}/requirements`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requirements,
-          replace: true,
-        }),
-      });
-
-      await handleAnalyze(project);
+      await submitRequirements(project.id, requirementTexts, true);
+      // Requirements saved — immediately run analysis.
+      await runAnalysis(project);
     } catch (err) {
       setError(err.message);
-      setLoading(false);
+      setLoadingState("idle");
     }
   }
 
-  async function handleAnalyze(selectedProject) {
+  /** Shared analysis runner used from Requirements page and Project Details page. */
+  async function runAnalysis(selectedProject) {
     if (!selectedProject) return;
+    if (analyzingRef.current) return; // guard against duplicate clicks
 
-    setLoading(true);
+    analyzingRef.current = true;
+    setLoadingState("analyzing");
     setError("");
+    setProject(selectedProject);
 
     try {
-      setProject(selectedProject);
-
-      await apiRequest(
-        `/projects/${selectedProject.id}/analyze`,
-        { method: "POST" }
-      );
-
-      const analysisResults = await apiRequest(
-        `/projects/${selectedProject.id}/results`
-      );
-
+      // POST /analyze is synchronous — it returns the ResultsOut directly.
+      const analysisResults = await analyzeProject(selectedProject.id);
       setResults(analysisResults);
       setActivePage("Results");
       await loadProjects();
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setLoadingState("idle");
+      analyzingRef.current = false;
     }
   }
 
@@ -131,13 +109,11 @@ export default function App() {
     setError("");
 
     try {
-      const existingResults = await apiRequest(
-        `/projects/${selectedProject.id}/results`
-      );
-
+      const existingResults = await getResults(selectedProject.id);
       setResults(existingResults);
       setActivePage("Results");
     } catch {
+      // No results yet — show project details so the user can run analysis.
       setActivePage("Project Details");
     }
   }
@@ -145,6 +121,7 @@ export default function App() {
   function renderPage() {
     switch (activePage) {
       case "Dashboard":
+      case "Projects":
         return (
           <Dashboard
             projects={projects}
@@ -158,6 +135,7 @@ export default function App() {
           <UploadProject
             onUpload={handleUpload}
             loading={loading}
+            loadingState={loadingState}
           />
         );
 
@@ -167,6 +145,7 @@ export default function App() {
             project={project}
             onSubmit={handleSaveRequirements}
             loading={loading}
+            loadingState={loadingState}
           />
         );
 
@@ -174,7 +153,11 @@ export default function App() {
         return (
           <Results
             results={results}
+            project={project}
             onBack={() => setActivePage("Dashboard")}
+            onReanalyze={() => runAnalysis(project)}
+            loading={loading}
+            loadingState={loadingState}
           />
         );
 
@@ -184,11 +167,13 @@ export default function App() {
             project={project}
             onBack={() => setActivePage("Dashboard")}
             onAddRequirements={() => setActivePage("Requirements")}
-            onAnalyze={() => handleAnalyze(project)}
+            onAnalyze={() => runAnalysis(project)}
+            loading={loading}
+            loadingState={loadingState}
           />
         );
 
-      case "Projects":
+      default:
         return (
           <Dashboard
             projects={projects}
@@ -196,21 +181,15 @@ export default function App() {
             onOpenProject={handleOpenProject}
           />
         );
-
-      default:
-        return <Dashboard projects={projects} />;
     }
   }
 
   return (
     <div className="app-layout">
-      <Sidebar
-        activePage={activePage}
-        setActivePage={setActivePage}
-      />
+      <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
       <main className="main-content">
-        <Navbar title={activePage} />
+        <Navbar title={activePage} loadingState={loadingState} />
 
         {error && (
           <div className="error-banner">

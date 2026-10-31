@@ -1,46 +1,38 @@
-
 import { useState } from "react";
-import { FileText, Plus, Trash2, ArrowRight } from "lucide-react";
+import { FileText, Plus, Trash2, ArrowRight, Loader2 } from "lucide-react";
 
-export default function Requirements({
-  project,
-  onSubmit,
-  loading,
-}) {
-  const [requirements, setRequirements] = useState([
-    "",
-  ]);
+export default function Requirements({ project, onSubmit, loading, loadingState }) {
+  const [requirements, setRequirements] = useState([""]);
 
   function updateRequirement(index, value) {
-    setRequirements((previous) =>
-      previous.map((item, i) => (i === index ? value : item))
-    );
+    setRequirements((prev) => prev.map((item, i) => (i === index ? value : item)));
   }
 
   function addRequirement() {
-    setRequirements((previous) => [...previous, ""]);
+    setRequirements((prev) => [...prev, ""]);
   }
 
   function removeRequirement(index) {
-    setRequirements((previous) =>
-      previous.filter((_, i) => i !== index)
-    );
+    setRequirements((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleSubmit(event) {
     event.preventDefault();
 
-    const validRequirements = requirements
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const valid = requirements.map((r) => r.trim()).filter(Boolean);
 
-    if (validRequirements.length === 0) {
+    if (valid.length === 0) {
       alert("Please enter at least one requirement.");
       return;
     }
 
-    onSubmit(validRequirements);
+    onSubmit(valid);
   }
+
+  let buttonLabel = "Save & Analyze";
+  if (loadingState === "saving") buttonLabel = "Saving requirements…";
+  else if (loadingState === "analyzing") buttonLabel = "Analyzing…";
+  else if (loading) buttonLabel = "Working…";
 
   return (
     <div className="page-content">
@@ -55,7 +47,7 @@ export default function Requirements({
         <FileText size={22} />
         <div>
           <strong>{project?.project_name || "Your Project"}</strong>
-          <p>Enter one requirement in each field.</p>
+          <p>Enter one requirement in each field. Analysis will run automatically after saving.</p>
         </div>
       </div>
 
@@ -74,9 +66,7 @@ export default function Requirements({
               type="text"
               placeholder={`Requirement ${index + 1}, e.g. The system should allow user login`}
               value={requirement}
-              onChange={(event) =>
-                updateRequirement(index, event.target.value)
-              }
+              onChange={(e) => updateRequirement(index, e.target.value)}
             />
             {requirements.length > 1 && (
               <button
@@ -95,14 +85,16 @@ export default function Requirements({
           type="button"
           className="secondary-button"
           onClick={addRequirement}
+          disabled={loading}
         >
           <Plus size={18} />
           Add Another Requirement
         </button>
 
         <button type="submit" className="primary-button" disabled={loading}>
-          {loading ? "Saving..." : "Save Requirements"}
-          <ArrowRight size={18} />
+          {loading && <Loader2 size={16} className="spin" />}
+          {buttonLabel}
+          {!loading && <ArrowRight size={18} />}
         </button>
       </form>
     </div>
