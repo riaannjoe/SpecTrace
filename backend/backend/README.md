@@ -1,6 +1,6 @@
 # SpecTrace — AI-Powered Software Requirement Traceability & Verification
 
-> **From written requirements to evidence-backed implementation insights.**
+> From written requirements to evidence-backed implementation insights.
 
 SpecTrace is a software requirement traceability and verification platform designed to help development teams understand whether their software requirements are reflected in their Python codebase.
 
