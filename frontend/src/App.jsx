@@ -9,6 +9,8 @@ import Requirements from "./pages/Requirements";
 import Results from "./pages/Results";
 import ProjectDetails from "./pages/ProjectDetails";
 
+
+const API_URL = "http://localhost:8001";
 import {
   listProjects,
   uploadProject,
@@ -16,6 +18,7 @@ import {
   analyzeProject,
   getResults,
 } from "./api";
+
 
 export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
