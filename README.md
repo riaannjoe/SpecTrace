@@ -738,49 +738,106 @@ The modular architecture provides opportunities for further development.
 ## 16. Project Structure
 
 ```text
-backend/
+SpecTrace/
 │
-├── app/
-│   ├── main.py
-│   ├── config.py
+├── backend/
 │   │
-│   ├── routes/
-│   │   ├── projects.py
-│   │   ├── requirements.py
-│   │   └── analysis.py
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── __init__.py
+│   │   │   ├── projects.py
+│   │   │   ├── requirements.py
+│   │   │   └── analysis.py
+│   │   │
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── project_service.py
+│   │   │   ├── requirement_service.py
+│   │   │   └── analysis_service.py
+│   │   │
+│   │   ├── database/
+│   │   │   ├── __init__.py
+│   │   │   ├── connection.py
+│   │   │   └── operations.py
+│   │   │
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   ├── project.py
+│   │   │   ├── requirement.py
+│   │   │   └── result.py
+│   │   │
+│   │   ├── analysis/
+│   │   │   ├── __init__.py
+│   │   │   ├── contract.py
+│   │   │   ├── adapter.py
+│   │   │   └── mock_adapter.py
+│   │   │
+│   │   └── utils/
+│   │       ├── __init__.py
+│   │       ├── file_handler.py
+│   │       ├── errors.py
+│   │       └── ids.py
 │   │
-│   ├── services/
-│   │   ├── project_service.py
-│   │   ├── requirement_service.py
-│   │   └── analysis_service.py
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── test_projects.py
+│   │   ├── test_requirements.py
+│   │   └── test_analysis.py
 │   │
-│   ├── database/
-│   │   ├── connection.py
-│   │   └── operations.py
+│   ├── docs/
+│   │   └── API.md
 │   │
-│   ├── schemas/
-│   │   ├── project.py
-│   │   ├── requirement.py
-│   │   └── result.py
+│   ├── uploads/
 │   │
-│   ├── analysis/
-│   │   ├── contract.py
-│   │   ├── adapter.py
-│   │   └── mock_adapter.py
-│   │
-│   └── utils/
-│       ├── file_handler.py
-│       ├── errors.py
-│       └── ids.py
+│   ├── .env
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── requirements.txt
+│   ├── pytest.ini
+│   └── README.md
 │
-├── tests/
-├── docs/
-├── uploads/
+├── frontend/
+│   │
+│   ├── public/
+│   │   └── favicon.ico
+│   │
+│   ├── src/
+│   │   │
+│   │   ├── assets/
+│   │   │   └── logo.svg
+│   │   │
+│   │   ├── components/
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── UploadProject.jsx
+│   │   │   ├── Projects.jsx
+│   │   │   ├── ProjectDetails.jsx
+│   │   │   ├── Requirements.jsx
+│   │   │   └── Results.jsx
+│   │   │
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   │
+│   │   ├── hooks/
+│   │   │   └── useProjects.js
+│   │   │
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   │
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   └── README.md
 │
-├── .env.example
 ├── .gitignore
-├── requirements.txt
-├── pytest.ini
 └── README.md
 ```
 
