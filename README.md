@@ -1,588 +1,869 @@
-<div align="center">
+# SpecTrace — AI-Powered Software Requirement Traceability & Verification
 
-# 🔍 SpecTrace
+> **From written requirements to evidence-backed implementation insights.**
 
-### AI-powered requirement traceability for Python projects
+SpecTrace is a software requirement traceability and verification platform designed to help development teams understand whether their software requirements are reflected in their Python codebase.
 
-Upload a Python project · State your requirements · Instantly know which ones are implemented — backed by real code evidence.
-
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-[![Gemini](https://img.shields.io/badge/Gemini-2.0%20Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
-[![Tests](https://img.shields.io/badge/tests-183%20passing-brightgreen)](backend/backend)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-
-</div>
+It analyses uploaded Python projects, processes software requirements, and generates a requirement-by-requirement traceability report. Instead of relying only on keyword matches, SpecTrace aims to connect each requirement with relevant source-code evidence, implementation status, and associated test files.
 
 ---
 
-## What is SpecTrace?
+## Table of Contents
 
-SpecTrace is a developer tool that bridges the gap between **written requirements** and **actual code**. Given a Python project (uploaded as a ZIP) and a list of natural-language requirements, SpecTrace performs a deep static analysis — combining AST parsing, test discovery, and Gemini AI semantic reasoning — to produce a per-requirement verdict with cited evidence from the real source code.
+1. [The Problem](#1-the-problem)
+2. [Our Solution](#2-our-solution)
+3. [Key Features](#3-key-features)
+4. [How SpecTrace Works](#4-how-spectrace-works)
+5. [System Architecture](#5-system-architecture)
+6. [Technology Stack](#6-technology-stack)
+7. [Getting Started](#7-getting-started)
+8. [MongoDB Atlas Configuration](#8-mongodb-atlas-configuration)
+9. [Running the Backend](#9-running-the-backend)
+10. [API Documentation](#10-api-documentation)
+11. [Analysis Engine](#11-analysis-engine)
+12. [Database Design](#12-database-design)
+13. [Security and Reliability](#13-security-and-reliability)
+14. [Current MVP Scope and Limitations](#14-current-mvp-scope-and-limitations)
+15. [Future Enhancements](#15-future-enhancements)
+16. [Project Structure](#16-project-structure)
+17. [Testing](#17-testing)
+18. [Troubleshooting](#18-troubleshooting)
 
-**The core question it answers:** *"Is this requirement actually implemented in the codebase?"*
+---
 
-No more manually grepping through files. No more guessing which features are done. SpecTrace gives every requirement a status (`implemented`, `partially_implemented`, `missing`, `not_verified`) with file paths, line numbers, and code snippets as proof.
+## 1. The Problem
 
-### Who is it for?
+Software development begins with requirements, but those requirements do not always remain connected to the actual implementation.
 
-| Role | Use case |
+As projects grow:
+
+- Requirements become difficult to track across multiple files.
+- Developers may struggle to identify which functions implement specific requirements.
+- Missing or partially implemented functionality can go unnoticed.
+- Finding relevant code and associated tests becomes time-consuming.
+- Changes to the codebase can introduce gaps that are difficult to identify manually.
+
+This creates a gap between **what software is expected to do and what its implementation actually contains.**
+
+## 2. Our Solution
+
+**SpecTrace bridges the gap between software requirements and source-code implementation.**
+
+It provides a structured workflow to:
+
+1. Upload a Python project as a ZIP archive.
+2. Add software requirements individually or in batches.
+3. Analyse the project using a configurable analysis engine.
+4. Map requirements to relevant source-code evidence.
+5. Generate a traceability report with implementation statuses.
+6. Identify requirements that need further investigation.
+
+The goal is to make requirement verification more organised, explainable, and efficient.
+
+## 3. Key Features
+
+### 3.1 Project Upload and Management
+- Upload Python projects in ZIP format.
+- Validate uploaded archives before extraction.
+- Store project metadata and file counts.
+- Maintain separate project records.
+
+### 3.2 Requirement Management
+- Add multiple requirements to a project.
+- Assign unique identifiers to individual requirements.
+- Retrieve previously submitted requirements.
+- Add new requirements without replacing existing ones.
+
+### 3.3 Codebase Analysis
+- Inspect supported Python source files.
+- Identify relevant functions and code locations.
+- Use a configurable analysis adapter.
+- Associate implementation evidence with individual requirements.
+
+### 3.4 Requirement Traceability Matrix
+- Map requirements to related source files.
+- Display code evidence and line references where available.
+- Show the implementation status of each requirement.
+- Keep results organised in requirement order.
+
+### 3.5 Risk and Coverage Insights
+- Identify potentially missing requirements.
+- Highlight partially implemented requirements.
+- Distinguish unverified requirements from verified findings.
+- Present analysis summaries through the frontend dashboard.
+
+### 3.6 Evidence-Backed Verification
+
+A key design principle of SpecTrace is that analysis results should be accompanied by supporting evidence.
+
+For example, a requirement may be associated with:
+- A source file.
+- A function or relevant code location.
+- A line number, when available.
+- An explanation of the analysis result.
+- Related test files, when identified.
+
+Finding a related function or test file does not automatically prove that the requirement works correctly. SpecTrace distinguishes code-level evidence from actual test execution.
+
+---
+
+## 4. How SpecTrace Works
+
+```mermaid
+flowchart TD
+    A["Upload Python Project (ZIP)"] --> B["Validate and Extract Project"]
+    B --> C["Add Software Requirements"]
+    C --> D["Requirement Management"]
+    D --> E["Analysis Adapter"]
+    E --> F["Code Analysis Engine"]
+    F --> G["Requirement-to-Code Mapping"]
+    G --> H["Verification Results"]
+    H --> I["MongoDB Atlas"]
+    I --> J["React Dashboard"]
+    J --> K["Traceability Report and Risk Insights"]
+```
+
+### Workflow Explanation
+
+| Stage | Description |
 |---|---|
-| **Developer** | Verify which backlog items are shipped before a release |
-| **QA / Test Engineer** | Find implementation gaps before writing test cases |
-| **Tech Lead / Architect** | Audit a new codebase against its design spec |
-| **Hackathon Team** | Demonstrate completeness of a submission |
+| 1. Upload | User uploads a Python project ZIP archive. |
+| 2. Validate | Backend validates the archive and safely extracts supported files. |
+| 3. Add requirements | User submits software requirements. |
+| 4. Analyse | Analysis service sends project information and requirements to the configured engine. |
+| 5. Map | Engine identifies potential code-level evidence for each requirement. |
+| 6. Store | Results and supporting evidence are saved in MongoDB Atlas. |
+| 7. Report | Frontend retrieves and displays requirement-level results. |
 
 ---
 
-## Features
+## 5. System Architecture
 
-### ✅ Multi-phase AI Analysis Engine
-A 5-stage pipeline processes every requirement independently:
+SpecTrace follows a modular backend architecture that separates HTTP handling, business logic, database operations, and code analysis.
 
-1. **AST Index** — parses every `.py` file into a structured index of classes, functions, decorators, imports, and call sites without executing any code.
-2. **Static Test Discovery** — finds test functions, scores their relevance to each requirement by keyword overlap, and records them (never runs them).
-3. **Gemini Semantic Matching** — batches requirements against relevant source context and sends them to `gemini-2.0-flash` with a strict JSON response schema. Identifies implementing code with file, line, and snippet evidence.
-4. **Source Validation** — every piece of evidence returned by Gemini is verified against the actual files on disk (file must exist, line range must be valid, snippet must match).
-5. **Risk Classification** — assigns a 4-level risk (`critical` / `high` / `medium` / `low`) to non-`not_verified` requirements based on status and confidence.
+```mermaid
+flowchart TD
+    A["React Frontend"] -->|"HTTP / JSON"| B["FastAPI Routes"]
+    B --> C["Service Layer"]
+    C --> D["Database Operations"]
+    D --> E[("MongoDB Atlas")]
+    C --> F["Analysis Adapter"]
+    F --> G["Mock Adapter / Real AST Engine"]
+    G --> C
+```
 
-### ✅ Strict Evidence Policy
-- `missing` status **cannot** be returned with empty or entirely invalid evidence — it is automatically downgraded to `not_verified`.
-- `not_verified` is excluded from all risk-level counts and reported separately.
-- Static test relevance scores are never treated as semantic confidence.
-- Uploaded code is **never imported or executed**.
+### Architectural Components
 
-### ✅ Hybrid Analysis Mode
-- When Gemini is available, results use semantic AI analysis (`gemini` mode).
-- If some batches fail, per-requirement provenance is preserved; the run is marked `hybrid`.
-- If Gemini is entirely unavailable, pure static analysis provides `static_fallback` results.
-- The Gemini model is configurable via the `GEMINI_MODEL` environment variable.
+**Frontend — React**
+- Project upload interface.
+- Requirement management interface.
+- Project dashboard.
+- Traceability and analysis report.
 
-### ✅ Full REST API (FastAPI)
-Eight endpoints covering project upload, requirement submission, analysis triggering, and result retrieval. Structured errors with machine-readable codes. Swagger UI at `/docs`.
+**API Layer — FastAPI**
+- Receives HTTP requests.
+- Validates incoming data.
+- Calls the appropriate service.
+- Returns structured responses.
 
-### ✅ React Frontend
-Single-page application with four views:
-- **Dashboard** — lists all uploaded projects with status chips and timestamps
-- **Upload Project** — drag-and-drop ZIP upload with validation feedback
-- **Requirements** — multi-line text area to submit natural-language requirements
-- **Results** — per-requirement cards with status badges, evidence citations, risk levels, and a summary panel with counts
+**Service Layer**
+- Contains project, requirement, and analysis business logic.
+- Coordinates database and analysis operations.
+- Handles workflow and status updates.
 
-### ✅ MongoDB Persistence
-Three collections (`projects`, `requirements`, `analysis_results`) with four indexes. All IDs are stable (`project_<12hex>`, `requirement_<12hex>`, `result_<12hex>`). Timestamps are stored as real BSON dates.
+**Database Layer**
+- Centralises MongoDB interactions.
+- Provides reusable database operations.
+- Manages project, requirement, and result records.
 
-### ✅ Security-first ZIP Handling
-Path traversal checks, zip-bomb protection (entry count + expanded size caps), symlink rejection, extension whitelist, isolated per-project storage. Server paths are never returned by the API.
+**Analysis Layer**
+- Provides a standard interface for analysis engines.
+- Supports a mock adapter and a configurable real analysis engine.
+- Validates engine output before storing results.
+
+**Design principle:** Routes handle HTTP communication, services handle business logic, and `database/operations.py` is the only module that directly communicates with MongoDB.
 
 ---
 
-## Tech Stack
+## 6. Technology Stack
 
-| Layer | Technology | Version | Role |
-|---|---|---|---|
-| Frontend | React | 19 | UI framework |
-| Frontend | Vite | 8.3.5 | Build tool & dev server |
-| Frontend | Tailwind CSS | 4 | Utility-first styling |
-| Backend | FastAPI | 0.110+ | REST API framework |
-| Backend | Python | 3.11+ | Runtime |
-| Backend | Uvicorn | latest | ASGI server |
-| Backend | Pydantic v2 | latest | Schema validation |
-| Database | MongoDB Atlas | M0+ | Persistent storage |
-| Database | Motor | latest | Async MongoDB driver |
-| AI | Google Gemini 2.0 Flash | `google-genai ≥2.28` | Semantic requirement matching |
-| AI | Python `ast` module | stdlib | Static code analysis |
-| Testing | pytest | latest | 183 tests, 1 skipped |
-| Testing | mongomock | latest | In-memory MongoDB for tests |
+| Component | Technology | Purpose |
+|---|---|---|
+| Frontend | React, JavaScript | User interface and dashboard |
+| Backend | Python, FastAPI | REST API and application logic |
+| Validation | Pydantic | Request and response validation |
+| Database | MongoDB Atlas | Persistent project and analysis storage |
+| Database Driver | PyMongo | MongoDB connectivity and operations |
+| Code Analysis | Python AST and static-analysis logic | Python source-code inspection |
+| Testing | Pytest, mongomock | Backend testing |
+| API Documentation | FastAPI Swagger UI | Interactive API documentation |
+
+*Only list additional technologies, such as Gemini or document-parsing libraries, as implemented components if they are actually integrated into the submitted version.*
 
 ---
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     React Frontend (Vite)                    │
-│  Dashboard · Upload · Requirements · Results                 │
-│                    api.js (fetch wrapper)                    │
-└───────────────────────┬─────────────────────────────────────┘
-                        │ HTTP/JSON  (port 5173 → 8001)
-┌───────────────────────▼─────────────────────────────────────┐
-│                  FastAPI Backend  (port 8001)                │
-│                                                             │
-│  routes/          services/          database/              │
-│  projects.py  →  project_service  →  operations.py          │
-│  requirements →  req_service      →  ─── MongoDB Atlas ───  │
-│  analysis.py  →  analysis_service →  operations.py          │
-│                      │                                       │
-│               analysis/adapter.py                           │
-│                      │                                       │
-└──────────────────────┼──────────────────────────────────────┘
-                        │ Python function call
-┌───────────────────────▼─────────────────────────────────────┐
-│                   AI Engine (ai_engine/)                     │
-│                                                             │
-│  analyzer.py         ← orchestrates all stages              │
-│  ├─ ast_visitor.py   ← AST parsing  (never executes code)   │
-│  ├─ static_tests.py  ← test discovery + relevance scoring   │
-│  ├─ gemini_matcher.py← batched Gemini API calls             │
-│  ├─ source_validator.py ← evidence verification vs. disk    │
-│  ├─ risk_analyzer.py ← 4-level risk classification          │
-│  └─ backend_adapter.py ← result format translation          │
-│                                                             │
-│              ↕  google-genai SDK                            │
-│         Google Gemini 2.0 Flash (external)                  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Request → Response flow
-
-```
-POST /projects/{id}/analyze
-    → analysis_service.run_analysis()
-        → file_handler: locate extracted project directory
-        → adapter.py: select real engine or mock
-            → analyzer.analyze()
-                → ast_visitor.extract_ast_index()       [Stage 1]
-                → static_tests.discover_static_tests()  [Stage 2]
-                → gemini_matcher.match_requirements()   [Stage 3]
-                    → batch requirements (≤50k chars context budget)
-                    → call Gemini API with response_schema
-                    → fallback to static if Gemini unavailable
-                → source_validator.validate_evidence()  [Stage 4]
-                    → reject evidence with bad file/line/snippet
-                    → downgrade missing→not_verified if no valid evidence
-                → risk_analyzer.evaluate_risk()         [Stage 5]
-        → analysis_service._validate_and_build_docs()
-        → operations.replace_results()
-    → GET /projects/{id}/results returns persisted docs
-```
-
----
-
-## Project Structure
-
-```
-SpecTrace/
-├── backend/
-│   └── backend/
-│       ├── app/
-│       │   ├── main.py                  # FastAPI app, CORS, error handlers
-│       │   ├── config.py                # Environment settings (Pydantic)
-│       │   ├── routes/
-│       │   │   ├── projects.py          # Upload, list, detail endpoints
-│       │   │   ├── requirements.py      # Submit & retrieve requirements
-│       │   │   └── analysis.py          # Trigger & retrieve analysis
-│       │   ├── services/
-│       │   │   ├── project_service.py
-│       │   │   ├── requirement_service.py
-│       │   │   └── analysis_service.py  # Orchestration + risk summary
-│       │   ├── database/
-│       │   │   ├── connection.py        # Motor async client
-│       │   │   └── operations.py        # All MongoDB reads/writes
-│       │   ├── schemas/
-│       │   │   ├── project.py
-│       │   │   ├── requirement.py
-│       │   │   └── result.py            # ResultOut, SummaryOut
-│       │   ├── analysis/
-│       │   │   ├── contract.py          # Engine I/O contract (documented)
-│       │   │   ├── adapter.py           # Real engine dispatcher
-│       │   │   └── mock_adapter.py      # Always-not_verified mock
-│       │   └── utils/
-│       │       ├── file_handler.py      # ZIP extraction & security
-│       │       ├── errors.py            # Structured error responses
-│       │       └── ids.py               # ID generation (uuid4 hex)
-│       ├── ai_engine/
-│       │   ├── analyzer.py              # Main pipeline orchestrator
-│       │   ├── ast_visitor.py           # AST index builder
-│       │   ├── static_tests.py          # Test discovery & relevance
-│       │   ├── gemini_matcher.py        # Batched Gemini API calls
-│       │   ├── source_validator.py      # Evidence file/line validation
-│       │   ├── risk_analyzer.py         # Risk classification rules
-│       │   └── backend_adapter.py       # Format translation
-│       ├── tests/                       # 183 tests (183 pass, 1 skip)
-│       ├── .env.example
-│       ├── requirements.txt
-│       └── pytest.ini
-└── frontend/
-    ├── src/
-    │   ├── App.jsx                      # Router + global state
-    │   ├── api.js                       # All fetch calls to backend
-    │   ├── components/
-    │   │   ├── Dashboard.jsx
-    │   │   ├── UploadProject.jsx
-    │   │   ├── Requirements.jsx
-    │   │   ├── Results.jsx
-    │   │   ├── ProjectDetails.jsx
-    │   │   ├── Navbar.jsx
-    │   │   └── Sidebar.jsx
-    │   ├── index.css
-    │   └── results.css
-    ├── .env.example
-    ├── package.json
-    └── vite.config.js
-```
-
----
-
-## Setup & Installation
+## 7. Getting Started
 
 ### Prerequisites
 
-- **Python 3.11+**
-- **Node.js 18+** and npm
-- **MongoDB Atlas** free cluster (M0) — [create one here](https://www.mongodb.com/atlas/database)
-- **Google AI Studio API key** — [get one here](https://aistudio.google.com/apikey)
+Install the following before running the backend:
 
----
+- Python 3.10 or later.
+- pip.
+- MongoDB Atlas account.
+- Git (if cloning the repository).
 
-### 1. Clone the repository
+### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/<your-org>/SpecTrace.git
-cd SpecTrace
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+cd <YOUR_PROJECT_FOLDER>
 ```
 
----
-
-### 2. Backend setup
+### Step 2: Navigate to the backend
 
 ```bash
-cd backend/backend
+cd backend
+```
 
-# Create and activate virtual environment
+### Step 3: Create a virtual environment
+
+**Windows — Command Prompt:**
+
+```cmd
 python -m venv venv
-
-# Windows
 venv\Scripts\activate
+```
 
-# macOS / Linux
+**Linux / macOS:**
+
+```bash
+python -m venv venv
 source venv/bin/activate
+```
 
-# Install dependencies
+### Step 4: Install dependencies
+
+```bash
 pip install -r requirements.txt
-
-# Copy environment template
-copy .env.example .env      # Windows
-# cp .env.example .env      # macOS/Linux
 ```
 
-Edit `.env` and fill in your values:
+### Step 5: Configure environment variables
+
+Copy the example environment file.
+
+**Windows:**
+
+```cmd
+copy .env.example .env
+```
+
+**Linux / macOS:**
+
+```bash
+cp .env.example .env
+```
+
+Add your MongoDB Atlas configuration to `.env`:
 
 ```env
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/
 MONGODB_DB_NAME=spectrace
-
-# Google Gemini
-GEMINI_API_KEY=your_api_key_here
-GEMINI_MODEL=gemini-2.0-flash          # optional — this is the default
-
-# Server
-PORT=8001
-MAX_UPLOAD_MB=50
-ANALYSIS_ENGINE=real                   # set to "mock" to skip AI calls
+ANALYSIS_ENGINE=mock
 ```
 
-**MongoDB Atlas quick setup:**
-1. Create a free M0 cluster
-2. Database Access → add a user (no special characters in password)
-3. Network Access → Allow access from anywhere (`0.0.0.0/0`)
-4. Connect → Drivers → Python → copy connection string into `MONGODB_URI`
+Replace the placeholders with your actual credentials.
 
-Collections and indexes are created automatically on first run.
-
-**Start the backend:**
-
-```bash
-uvicorn app.main:app --reload --port 8001
-```
-
-Health check: `http://localhost:8001/` should return `{"status": "ok", "database": "connected"}`.
-
-Swagger UI: `http://localhost:8001/docs`
+Do not commit `.env` to GitHub.
 
 ---
 
-### 3. Frontend setup
+## 8. MongoDB Atlas Configuration
 
-```bash
-cd frontend
+SpecTrace uses MongoDB Atlas for persistent storage.
 
-# Copy environment template
-copy .env.example .env      # Windows
-# cp .env.example .env      # macOS/Linux
+### Setup Instructions
+
+1. Create a MongoDB Atlas account.
+2. Create a free M0 cluster.
+3. Open **Database Access** and create a database user.
+4. Open **Network Access** and configure an IP access rule.
+5. Select **Connect → Drivers → Python**.
+6. Copy the MongoDB connection string.
+7. Replace the username, password, and cluster details.
+8. Add the connection string to your backend `.env` file.
+
+For a temporary hackathon demonstration, Atlas allows an IP access rule of `0.0.0.0/0`. This permits connections from any IP and should be replaced with restricted access for production.
+
+### Collections
+
+The application creates the required collections and indexes automatically when configured to do so.
+
+- `projects`
+- `requirements`
+- `analysis_results`
+
+Database name:
+
+```text
+spectrace
 ```
-
-The `.env` should contain:
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8001
-```
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-```
-
-Frontend: `http://localhost:5173`
 
 ---
 
-### 4. Run tests
+## 9. Running the Backend
+
+From the `backend` directory, activate the virtual environment and run:
 
 ```bash
-cd backend/backend
-python -m pytest --tb=short -q
+uvicorn app.main:app --reload --port 8000
 ```
 
-Tests use `mongomock` (in-memory MongoDB). No Atlas connection required. Tests that need a real connection skip themselves if `.env` is not configured.
+When the server starts successfully, open:
 
-**Current test results: 183 passed, 1 skipped, 0 failed.**
+**Backend health check:**
+
+http://localhost:8000/
+
+The expected healthy response should indicate that the database is connected.
+
+**Interactive API documentation:**
+
+http://localhost:8000/docs
+
+**OpenAPI schema:**
+
+http://localhost:8000/openapi.json
+
+The frontend must use the same backend host and port configured here.
 
 ---
 
-## API Reference
+## 10. API Documentation
+
+SpecTrace exposes REST API endpoints for project management, requirement management, and analysis.
+
+### 10.1 Project APIs
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/` | Health check — confirms database connectivity |
-| `POST` | `/projects/upload` | Upload a Python project as a `.zip` file |
-| `GET` | `/projects` | List all uploaded projects |
-| `GET` | `/projects/{id}` | Get project details |
-| `POST` | `/projects/{id}/requirements` | Submit natural-language requirements |
-| `GET` | `/projects/{id}/requirements` | Retrieve submitted requirements |
-| `POST` | `/projects/{id}/analyze` | Trigger analysis (synchronous) |
-| `GET` | `/projects/{id}/results` | Retrieve analysis results |
+| GET | `/` | Backend and database health check |
+| POST | `/projects/upload` | Upload a Python project ZIP |
+| GET | `/projects` | Retrieve all projects |
+| GET | `/projects/{id}` | Retrieve a specific project |
 
-### Upload a project
+**Project upload**
 
-```bash
-curl -X POST http://localhost:8001/projects/upload \
-  -F "file=@my_project.zip" \
-  -F "project_name=My App"
-```
+Request type: `multipart/form-data`
 
-### Submit requirements
+Fields:
+- `file`: Python project ZIP archive.
+- `project_name`: Optional project name.
+
+Example:
 
 ```bash
-curl -X POST http://localhost:8001/projects/project_<id>/requirements \
-  -H "Content-Type: application/json" \
-  -d '{
-    "requirements": [
-      "Users should be able to register with an email address.",
-      "Passwords must be hashed before storage.",
-      "Users should be able to log in and receive a session token."
-    ],
-    "replace": false
-  }'
+curl -X POST http://localhost:8000/projects/upload \
+  -F "file=@student_app.zip" \
+  -F "project_name=Student App"
 ```
 
-### Trigger analysis
+### 10.2 Requirement APIs
 
-```bash
-curl -X POST http://localhost:8001/projects/project_<id>/analyze
-```
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/projects/{id}/requirements` | Add requirements to a project |
+| GET | `/projects/{id}/requirements` | Retrieve project requirements |
 
-### Sample result response
+Example request:
 
 ```json
 {
-  "project_id": "project_3f9a1c2b7d10",
-  "project_name": "My App",
-  "project_status": "analyzed",
-  "analyzed_at": "2026-10-31T10:16:02Z",
-  "engine": "SpecTrace AST Engine v1",
-  "is_mock": false,
-  "analysis_mode": "gemini",
-  "summary": {
-    "total": 3,
-    "implemented": 2,
-    "partially_implemented": 1,
-    "missing": 0,
-    "not_verified": 0,
-    "critical_risks": 0,
-    "high_risks": 1,
-    "medium_risks": 1,
-    "low_risks": 1
-  },
-  "results": [
-    {
-      "id": "result_a1b2c3d4e5f6",
-      "requirement_id": "requirement_0a1b2c3d4e5f",
-      "requirement_description": "Passwords must be hashed before storage.",
-      "status": "implemented",
-      "confidence": 0.94,
-      "risk_level": "low",
-      "evidence": [
-        {
-          "file": "auth.py",
-          "line": 42,
-          "snippet": "password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt())",
-          "description": "bcrypt hash applied before user record is written"
-        }
-      ],
-      "test_status": "not_run",
-      "explanation": "auth.py line 42 applies bcrypt.hashpw before writing the user record.",
-      "analysis_mode": "gemini",
-      "engine": "SpecTrace AST Engine v1",
-      "is_mock": false,
-      "analyzed_at": "2026-10-31T10:16:02Z"
-    }
-  ]
+  "requirements": [
+    "Users must be able to register",
+    "Users must be able to log in",
+    "Passwords must be validated"
+  ],
+  "replace": false
 }
 ```
 
-### Error format
+Submit this JSON to:
 
-All errors use a consistent envelope:
+```text
+POST /projects/{project_id}/requirements
+```
+
+When `replace` is false, new requirements are added without replacing the existing ones. When true, existing requirements are replaced according to the backend implementation.
+
+### 10.3 Analysis APIs
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/projects/{id}/analyze` | Start requirement analysis |
+| GET | `/projects/{id}/results` | Retrieve analysis results |
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/projects/project_3f9a1c2b7d10/analyze
+```
+
+Retrieve results:
+
+```bash
+curl http://localhost:8000/projects/project_3f9a1c2b7d10/results
+```
+
+### 10.4 Verification Statuses
+
+Each requirement receives one of the following statuses:
+
+| Status | Meaning |
+|---|---|
+| `implemented` | Analysis found evidence supporting implementation. |
+| `partially_implemented` | Some relevant implementation evidence was identified, but coverage appears incomplete. |
+| `missing` | The configured engine found no matching implementation evidence. |
+| `not_verified` | The available evidence is insufficient to determine implementation status. |
+
+These statuses represent analysis findings, not a guarantee that the software behaves correctly at runtime.
+
+### 10.5 Error Handling
+
+API errors use a consistent response structure:
 
 ```json
 {
   "error": {
     "code": "not_found",
-    "message": "Project not found.",
+    "message": "Project not found",
     "details": []
   }
 }
 ```
 
-| HTTP | Code | Meaning |
+Supported error categories include:
+
+| HTTP Status | Error Code | Meaning |
 |---|---|---|
-| 400 | `bad_request` | Invalid input or malformed ZIP |
-| 404 | `not_found` | Unknown project or requirement ID |
-| 409 | `conflict` | Analysis already running |
-| 413 | `file_too_large` | ZIP exceeds `MAX_UPLOAD_MB` |
-| 422 | `validation_error` | Schema validation failure |
-| 502 | `engine_error` | AI engine returned bad output |
-| 503 | `database_error` | MongoDB unreachable |
+| 400 | `bad_input` | Invalid input or ZIP archive |
+| 404 | `not_found` | Requested resource does not exist |
+| 409 | `analysis_running` | Analysis is already running |
+| 413 | `file_too_large` | Upload exceeds the configured limit |
+| 422 | `validation_error` | Request validation failed |
+| 502 | `engine_error` | Analysis engine returned invalid output |
+| 503 | `database_unavailable` | Database is unavailable |
 
 ---
 
-## How the AI Analysis Works
+## 11. Analysis Engine
 
-### Stage 1: AST Parsing
+SpecTrace uses an adapter-based design to separate the analysis workflow from the underlying analysis implementation.
 
-Every `.py` file in the uploaded project is parsed with Python's `ast` module — **no code is ever imported or executed**. The result is a structured index of:
-- Function and class definitions (name, line, docstring, decorators)
-- Import statements
-- Call sites
-- Assignment patterns
+This makes it possible to switch between a mock adapter and a real analysis engine without changing the API routes or service workflow.
 
-### Stage 2: Static Test Discovery
+### 11.1 Mock Adapter
 
-Test files are identified by naming convention (`test_*.py`, `*_test.py`). Each test function is scored for relevance to each requirement using keyword overlap. Relevance scores are stored separately and **never treated as semantic confidence**.
+The mock adapter is intended for development and demonstration of the backend workflow.
 
-### Stage 3: Gemini Semantic Matching
+Its behaviour is deliberately transparent:
 
-Requirements are grouped into batches with a 50 000-character context budget. For each batch, a prompt containing the requirements and the most relevant source context is sent to `gemini-2.0-flash` using JSON mode with a strict `response_schema`. The model identifies implementing code with file paths, line ranges, and snippets.
+- It does not invent implementation evidence.
+- All requirements receive the `not_verified` status.
+- Results contain `is_mock: true`.
+- Explanations identify the result as mock output.
 
-- If Gemini is unavailable (no API key, timeout, rate limit), the batch falls back to static analysis.
-- If some batches succeed and others fail, the run is marked `hybrid`. Per-requirement provenance is always recorded.
-- The model is configurable via `GEMINI_MODEL`.
+The frontend should display a visible **DEMO DATA / MOCK ANALYSIS** indicator whenever `is_mock` is true.
 
-### Stage 4: Evidence Validation
+### 11.2 Real AST Analysis Engine
 
-Every piece of evidence from Gemini is validated against actual files on disk:
-- File must exist in the extracted project
-- Line range must be within the file
-- Snippet must match the actual file content
+The real analysis engine can inspect Python source code using static-analysis techniques.
 
-Invalid evidence is rejected. If all evidence for a `missing` result is invalid, the status is downgraded to `not_verified`.
+Its responsibilities include:
 
-**Important policy:** `missing` status cannot be returned with an empty evidence list. Insufficient evidence → `not_verified`. This prevents false negatives from absent keywords.
+- Receiving project metadata and requirements.
+- Inspecting supported Python files.
+- Identifying relevant code locations.
+- Returning requirement-level evidence.
+- Providing a status and explanation for each requirement.
 
-### Stage 5: Risk Classification
+### 11.3 Engine Contract
 
-A rule-based classifier assigns a risk level to each requirement:
+The analysis engine must expose:
 
-| Status | Confidence | Risk Level |
-|---|---|---|
-| `missing` | any | `critical` |
-| `partially_implemented` | < 0.5 | `high` |
-| `partially_implemented` | ≥ 0.5 | `medium` |
-| `implemented` | < 0.7 | `medium` |
-| `implemented` | ≥ 0.7 | `low` |
+```python
+def analyze(request: dict) -> dict:
+    ...
+```
 
-`not_verified` requirements are **excluded** from all risk counts and reported separately.
+**Input structure:**
 
----
+```json
+{
+  "project_id": "project_123",
+  "project_path": "/internal/project/path",
+  "python_files": [
+    "auth.py",
+    "main.py"
+  ],
+  "requirements": [
+    {
+      "id": "requirement_123",
+      "description": "Users must be able to log in"
+    }
+  ]
+}
+```
 
-## Configuration Reference
+**Expected output structure:**
 
-### Backend (`.env`)
+```json
+{
+  "engine_name": "SpecTrace AST Engine v1",
+  "is_mock": false,
+  "results": [
+    {
+      "requirement_id": "requirement_123",
+      "status": "implemented",
+      "evidence": [
+        {
+          "file": "auth.py",
+          "line": 25,
+          "description": "Related login function identified"
+        }
+      ],
+      "test_status": "not_run",
+      "explanation": "Relevant implementation evidence was identified."
+    }
+  ]
+}
+```
 
-| Variable | Default | Description |
-|---|---|---|
-| `MONGODB_URI` | *required* | MongoDB Atlas connection string |
-| `MONGODB_DB_NAME` | `spectrace` | Database name |
-| `GEMINI_API_KEY` | *required for AI* | Google AI Studio key |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Gemini model to use |
-| `ANALYSIS_ENGINE` | `real` | `real` or `mock` |
-| `MAX_UPLOAD_MB` | `50` | ZIP upload size limit |
-| `PORT` | `8001` | Server port |
+The backend validates the engine output before saving results.
 
-### Frontend (`.env`)
+- Unknown requirement IDs are rejected.
+- Invalid result structures produce an analysis error.
+- Requirements omitted by the engine are stored as `not_verified`.
+- Previous analysis results for the same project are replaced when analysis is run again.
 
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_API_BASE_URL` | `http://127.0.0.1:8001` | Backend base URL |
+### 11.4 Enabling the Real Engine
 
----
+Configure the backend environment:
 
-## Known Limitations
+```env
+ANALYSIS_ENGINE=real
+```
 
-- **No authentication** — any user who can reach the API can list all projects. Add an auth layer before production use.
-- **No analysis run history** — re-running analysis replaces previous results for that project.
-- **`test_status` is always `not_run`** — executing uploaded test files requires a sandboxed environment (container + resource limits) not implemented in this version.
-- **Python projects only** — the AST engine is Python-specific.
-- **Synchronous analysis** — large projects may take several seconds; the API blocks until complete.
-- **No rate limiting** — add a reverse proxy (nginx, Caddy) with rate limiting for public deployments.
+The real engine package must be available and satisfy the documented contract.
 
----
+Restart the backend after changing the configuration.
 
-## Security
-
-- **ZIP bomb protection** — entry count cap, expanded size cap, entry-by-entry byte accounting.
-- **Path traversal prevention** — every ZIP entry checked for `..` and absolute paths; symlinks and encrypted entries rejected; only whitelisted file types extracted.
-- **No code execution** — uploaded code is read as text for AST parsing only.
-- **Credentials via `.env`** — never committed (`.gitignore` covers `.env`). Server internal paths never returned by the API.
-- **API key safety** — `GEMINI_API_KEY` is never logged or returned in any API response. Gemini error details are sanitized before reaching API consumers.
-
----
-
-## Deployment
-
-### Backend (Railway / Render / any PaaS)
-
-1. Set all environment variables from the [Configuration Reference](#configuration-reference) in your platform's dashboard.
-2. Build command: `pip install -r requirements.txt`
-3. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. Point `MONGODB_URI` at your Atlas cluster with Network Access open to `0.0.0.0/0`.
-
-### Frontend (Vercel / Netlify)
-
-1. Set `VITE_API_BASE_URL` to your deployed backend URL.
-2. Build command: `npm run build`
-3. Output directory: `dist`
-
-### Access instructions for judges
-
-If login is required, see the submission form for test credentials. Never share personal passwords.
+**Important:** Setting this environment variable alone does not create a real analysis engine. The corresponding implementation must exist and be connected through the adapter.
 
 ---
 
-## Acknowledgements
+## 12. Database Design
 
-Built for **Uncharted 2026** — NEXUS | SVNIT Surat, 30 October – 1 November 2026.
+SpecTrace uses three primary MongoDB collections.
 
-Track 3: Developer Tools for Production Use Cases.
+### 12.1 Projects
+
+Stores uploaded project information.
+
+| Field | Description |
+|---|---|
+| `_id` | Unique project identifier |
+| `project_name` | Project name |
+| `filename` | Uploaded ZIP filename |
+| `language` | Detected or supported language |
+| `status` | Current project status |
+| `python_file_count` | Number of Python files |
+| `total_file_count` | Number of supported files |
+| `storage_path` | Internal extracted project location |
+| `created_at` | Project creation timestamp |
+| `last_analyzed_at` | Most recent analysis timestamp |
+
+### 12.2 Requirements
+
+Stores individual requirements associated with projects.
+
+| Field | Description |
+|---|---|
+| `_id` | Unique requirement identifier |
+| `project_id` | Associated project |
+| `description` | Requirement text |
+| `status` | Requirement status |
+| `created_at` | Creation timestamp |
+
+### 12.3 Analysis Results
+
+Stores the output of requirement analysis.
+
+| Field | Description |
+|---|---|
+| `_id` | Unique result identifier |
+| `project_id` | Associated project |
+| `requirement_id` | Associated requirement |
+| `requirement_description` | Requirement text |
+| `status` | Verification status |
+| `evidence` | Supporting code evidence |
+| `file_name` | Primary associated file |
+| `line_number` | Primary associated line number |
+| `test_status` | Test execution or discovery status |
+| `explanation` | Analysis explanation |
+| `engine` | Analysis engine name |
+| `is_mock` | Indicates whether the result is mock output |
+| `order` | Requirement order |
+| `analyzed_at` | Analysis timestamp |
+
+### Indexing Strategy
+
+The backend creates indexes to support efficient retrieval:
+
+- `projects.created_at`
+- `requirements(project_id, created_at)`
+- `analysis_results(project_id, order)`
+- `analysis_results(project_id, requirement_id)`
+
+Timestamps are stored as UTC BSON dates.
 
 ---
 
-## License
+## 13. Security and Reliability
 
-[MIT](LICENSE)
+Security is considered throughout the project-upload and analysis workflow.
+
+### ZIP Archive Validation
+
+Uploaded archives are checked for:
+
+- Valid ZIP format.
+- Allowed file types.
+- File-size limits.
+- File-count limits.
+- Expanded-size limits to reduce ZIP-bomb risk.
+- Path traversal attempts.
+- Absolute paths.
+- Symlinks.
+- Encrypted entries.
+
+Each project is extracted into its own isolated directory.
+
+### Safe Code Handling
+
+**Uploaded source code is never imported or executed by the backend.**
+
+The analysis process uses static inspection rather than executing uploaded project code.
+
+This reduces the risks associated with processing untrusted source-code archives.
+
+### Credential Protection
+
+- Database credentials are stored in environment variables.
+- `.env` is excluded from version control.
+- Internal server file paths are not exposed through API responses.
+
+### Error Handling
+
+The backend uses structured error responses and handles common upload, validation, database, and analysis failures.
+
+---
+
+## 14. Current MVP Scope and Limitations
+
+SpecTrace is designed as a focused MVP with a clear scope.
+
+| Area | Current scope |
+|---|---|
+| Language support | Python-focused |
+| Project input | ZIP archive |
+| Requirement input | Text submitted through the requirements API |
+| Code execution | Not permitted |
+| Test execution | Not implemented |
+| Test status | `not_run` unless supplied by the analysis engine |
+| Authentication | Not included in the MVP |
+| Rate limiting | Not included in the MVP |
+| User-level project ownership | Not included in the MVP |
+
+### Why is test execution not included?
+
+Running arbitrary uploaded code or tests requires a secure sandbox with resource limits, execution timeouts, and isolation.
+
+For the current MVP, SpecTrace avoids executing untrusted code.
+
+Instead, it focuses on source-code inspection and evidence-based analysis.
+
+This is an intentional security and feasibility decision.
+
+### Access Control Note
+
+Authentication and per-user project ownership are not included in this MVP. Anyone who can reach an unprotected API may be able to access available project records.
+
+The current configuration is intended for a controlled demonstration environment, not unrestricted production deployment.
+
+---
+
+## 15. Future Enhancements
+
+The modular architecture provides opportunities for further development.
+
+**1. Multi-language support**
+- Extend analysis to Java, JavaScript, and other programming languages.
+
+**2. Advanced AI-assisted analysis**
+- Improve requirement understanding and semantic code matching.
+- Provide richer explanations and more useful evidence.
+
+**3. Secure test execution**
+- Introduce isolated containers and resource limits.
+- Support controlled test execution and genuine test-result reporting.
+
+**4. Version-control integration**
+- Connect Git repositories.
+- Analyse code changes and identify potentially affected requirements.
+
+**5. Enhanced risk analytics**
+- Add requirement coverage trends.
+- Identify high-risk implementation areas.
+- Compare results across project versions.
+
+**6. Access control**
+- Add user authentication.
+- Introduce project ownership and role-based permissions.
+
+---
+
+## 16. Project Structure
+
+```text
+backend/
+│
+├── app/
+│   ├── main.py
+│   ├── config.py
+│   │
+│   ├── routes/
+│   │   ├── projects.py
+│   │   ├── requirements.py
+│   │   └── analysis.py
+│   │
+│   ├── services/
+│   │   ├── project_service.py
+│   │   ├── requirement_service.py
+│   │   └── analysis_service.py
+│   │
+│   ├── database/
+│   │   ├── connection.py
+│   │   └── operations.py
+│   │
+│   ├── schemas/
+│   │   ├── project.py
+│   │   ├── requirement.py
+│   │   └── result.py
+│   │
+│   ├── analysis/
+│   │   ├── contract.py
+│   │   ├── adapter.py
+│   │   └── mock_adapter.py
+│   │
+│   └── utils/
+│       ├── file_handler.py
+│       ├── errors.py
+│       └── ids.py
+│
+├── tests/
+├── docs/
+├── uploads/
+│
+├── .env.example
+├── .gitignore
+├── requirements.txt
+├── pytest.ini
+└── README.md
+```
+
+The real analysis engine package can be added separately when implemented.
+
+---
+
+## 17. Testing
+
+SpecTrace uses Pytest for backend testing.
+
+Run the test suite from the backend directory:
+
+```bash
+pytest -v
+```
+
+The tests use `mongomock` to provide an in-memory MongoDB-like environment for database-related tests.
+
+This allows most automated tests to run without a live Atlas connection.
+
+The real database connection test is designed to skip when its required environment configuration is unavailable.
+
+### Recommended Test Scenarios
+
+- Backend health check.
+- Valid project ZIP upload.
+- Invalid ZIP upload.
+- File-size and archive validation.
+- Adding requirements to a project.
+- Retrieving project requirements.
+- Running mock analysis.
+- Retrieving analysis results.
+- Handling unknown project IDs.
+- Handling invalid analysis-engine output.
+- MongoDB connection failure handling.
+
+---
+
+## 18. Troubleshooting
+
+### Backend cannot connect to MongoDB Atlas
+
+Check:
+
+- MongoDB URI in `.env`.
+- Database username and password.
+- Atlas network access configuration.
+- Cluster availability.
+- Internet connectivity.
+
+If your password contains special characters, URL-encode them in the connection string.
+
+### Frontend cannot reach the backend
+
+Make sure the backend is running.
+
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+Check that the frontend API base URL uses the same port.
+
+### Analysis returns mock results
+
+Check the backend environment:
+
+```env
+ANALYSIS_ENGINE=mock
+```
+
+Mock results are intentionally marked with `is_mock: true` and `not_verified` statuses.
+
+For real analysis, the real engine package must be implemented and configured.
+
+### Port already in use
+
+Choose another available port and update the frontend API base URL accordingly.
+
+---
+
+## Conclusion
+
+**SpecTrace aims to make software requirements traceable, implementation evidence visible, and verification gaps easier to investigate.**
+
+By combining a modular backend, structured requirement management, static code analysis, and evidence-backed reporting, SpecTrace provides a foundation for more transparent software verification.
+
+> **SpecTrace — Know what your software promises. Discover what your code supports.**
